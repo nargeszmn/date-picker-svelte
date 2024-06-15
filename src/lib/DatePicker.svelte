@@ -21,7 +21,7 @@
 
 	/** Date value. It's `null` if no date is selected */
 	export let value: Date | null = null
-	export let calendarType: CalendarType = 'Gregorian'
+	export let calendarType: CalendarType = 'Jalali'
 
 	function setValue(d: Date) {
 		if (d.getTime() !== value?.getTime()) {

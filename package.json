@@ -135,5 +135,8 @@
 		"plugins": [
 			"prettier-plugin-svelte"
 		]
+	},
+	"dependencies": {
+		"date-fns-jalali": "^3.6.0-0"
 	}
 }

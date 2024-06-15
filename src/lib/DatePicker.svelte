@@ -1,8 +1,14 @@
 <script lang="ts">
 	import TimePicker from './TimePicker.svelte'
-	import { getMonthLength, getCalendarDays, type CalendarDay } from './date-utils.js'
+	import {
+		getMonthLength,
+		getCalendarDays,
+		type CalendarDay,
+		type CalendarType,
+	} from './date-utils.js'
 	import { getInnerLocale, type Locale } from './locale.js'
 	import { createEventDispatcher } from 'svelte'
+	import { newDate, getYear, getMonth, getDate } from 'date-fns-jalali'
 
 	const dispatch = createEventDispatcher<{
 		/** Fires when the user selects a new value by clicking on a date or by pressing enter */
@@ -15,6 +21,7 @@
 
 	/** Date value. It's `null` if no date is selected */
 	export let value: Date | null = null
+	export let calendarType: CalendarType = 'Gregorian'
 
 	function setValue(d: Date) {
 		if (d.getTime() !== value?.getTime()) {
@@ -54,9 +61,24 @@
 	/** Show a time picker with the specified precision */
 	export let timePrecision: 'minute' | 'second' | 'millisecond' | null = null
 	/** The earliest year the user can select */
-	export let min = new Date(defaultDate.getFullYear() - 20, 0, 1)
+	export let min =
+		calendarType == 'Gregorian'
+			? new Date(defaultDate.getFullYear() - 20, 0, 1)
+			: newDate(getYear(defaultDate) - 20, 0, 1)
 	/** The latest year the user can select */
-	export let max = new Date(defaultDate.getFullYear(), 11, 31, 23, 59, 59, 999)
+	export let max =
+		calendarType == 'Gregorian'
+			? new Date(defaultDate.getFullYear(), 11, 31, 23, 59, 59, 999)
+			: newDate(
+					getYear(defaultDate) + 1,
+					11,
+					getMonthLength(getYear(defaultDate) + 1, 11, calendarType),
+					23,
+					59,
+					59,
+					999,
+				)
+
 	$: if (value && value > max) {
 		setValue(max)
 	} else if (value && value < min) {
@@ -97,31 +119,53 @@
 		}
 	}
 
-	let years = getYears(min, max)
-	$: years = getYears(min, max)
-	function getYears(min: Date, max: Date) {
+	let years = getYears(min, max, calendarType)
+	$: years = getYears(min, max, calendarType)
+	function getYears(min: Date, max: Date, calendarType: CalendarType) {
 		let years = []
-		for (let i = min.getFullYear(); i <= max.getFullYear(); i++) {
-			years.push(i)
+		if (calendarType == 'Gregorian') {
+			for (let i = min.getFullYear(); i <= max.getFullYear(); i++) {
+				years.push(i)
+			}
+		} else {
+			for (let i = getYear(min); i <= getYear(max); i++) {
+				years.push(i)
+			}
 		}
 		return years
 	}
 
 	/** Locale object for internationalization */
 	export let locale: Locale = {}
-	$: iLocale = getInnerLocale(locale)
+	$: iLocale = getInnerLocale(locale, calendarType)
 	/** Wait with updating the date until a date is selected */
 	export let browseWithoutSelecting = false
 
-	$: browseYear = browseDate.getFullYear()
+	$: browseYear = calendarType == 'Gregorian' ? browseDate.getFullYear() : getYear(browseDate)
 	function setYear(newYear: number) {
-		browseDate.setFullYear(newYear)
-		browse(browseDate)
+		if (calendarType == 'Gregorian') {
+			browseDate.setFullYear(newYear)
+			browse(browseDate)
+		} else {
+			//newYear is in Jalali format
+			//Must update the browseDate with the corresponding Gregorian Date using the JalaliDate
+			browse(
+				newDate(
+					newYear,
+					getMonth(browseDate),
+					getDate(browseDate),
+					browseDate.getHours(),
+					browseDate.getMinutes(),
+					browseDate.getSeconds(),
+					browseDate.getMilliseconds(),
+				),
+			)
+		}
 	}
 
-	$: browseMonth = browseDate.getMonth()
+	$: browseMonth = calendarType == 'Gregorian' ? browseDate.getMonth() : getMonth(browseDate) //browseMonth must be in Jalali format
 	function setMonth(newMonth: number) {
-		let newYear = browseDate.getFullYear()
+		let newYear = calendarType == 'Gregorian' ? browseDate.getFullYear() : getYear(browseDate)
 		if (newMonth === 12) {
 			newMonth = 0
 			newYear++
@@ -130,50 +174,151 @@
 			newYear--
 		}
 
-		const maxDate = getMonthLength(newYear, newMonth)
-		const newDate = Math.min(browseDate.getDate(), maxDate)
-		browse(
-			new Date(
-				newYear,
-				newMonth,
-				newDate,
-				browseDate.getHours(),
-				browseDate.getMinutes(),
-				browseDate.getSeconds(),
-				browseDate.getMilliseconds(),
-			),
-		)
+		const maxDate = getMonthLength(newYear, newMonth, calendarType)
+		const newDay =
+			calendarType == 'Gregorian'
+				? Math.min(browseDate.getDate(), maxDate)
+				: Math.min(getDate(browseDate), maxDate)
+
+		if (calendarType == 'Gregorian') {
+			browse(
+				new Date(
+					newYear,
+					newMonth,
+					newDay,
+					browseDate.getHours(),
+					browseDate.getMinutes(),
+					browseDate.getSeconds(),
+					browseDate.getMilliseconds(),
+				),
+			)
+		} else {
+			browse(
+				newDate(
+					newYear,
+					newMonth,
+					newDay,
+					browseDate.getHours(),
+					browseDate.getMinutes(),
+					browseDate.getSeconds(),
+					browseDate.getMilliseconds(),
+				),
+			)
+		}
+	}
+	function monthIsInRange(month: number) {
+		if (calendarType == 'Gregorian') {
+			return (
+				new Date(
+					browseYear,
+					month,
+					getMonthLength(browseYear, month, calendarType),
+					23,
+					59,
+					59,
+					999,
+				) < min || new Date(browseYear, month) > max
+			)
+		} else {
+			return (
+				newDate(
+					browseYear,
+					month,
+					getMonthLength(browseYear, month, calendarType),
+					23,
+					59,
+					59,
+					999,
+				) < min || newDate(browseYear, month, 1) > max
+			)
+		}
 	}
 
-	$: calendarDays = getCalendarDays(browseDate, iLocale.weekStartsOn)
+	$: calendarDays = getCalendarDays(browseDate, iLocale.weekStartsOn, calendarType)
 
 	function selectDay(calendarDay: CalendarDay) {
 		if (dayIsInRange(calendarDay, min, max)) {
-			browseDate.setFullYear(0)
-			browseDate.setMonth(0)
-			browseDate.setDate(1)
-			browseDate.setFullYear(calendarDay.year)
-			browseDate.setMonth(calendarDay.month)
-			browseDate.setDate(calendarDay.number)
+			if (calendarType == 'Gregorian') {
+				// browseDate.setFullYear(0)
+				// browseDate.setMonth(0)
+				// browseDate.setDate(1)
+				browseDate.setFullYear(calendarDay.year)
+				browseDate.setMonth(calendarDay.month)
+				browseDate.setDate(calendarDay.number)
+			} else {
+				//calendarDay is in Jalali format
+				const gregorianDate = newDate(calendarDay.year, calendarDay.month, calendarDay.number)
+				// browseDate.setFullYear(0)
+				// browseDate.setMonth(0)
+				// browseDate.setDate(1)
+				browseDate.setFullYear(gregorianDate.getFullYear())
+				browseDate.setMonth(gregorianDate.getMonth())
+				browseDate.setDate(gregorianDate.getDate())
+			}
 			setValueDate(browseDate)
 			dispatch('select', cloneDate(browseDate))
 		}
 	}
 	function dayIsInRange(calendarDay: CalendarDay, min: Date, max: Date) {
-		const date = new Date(calendarDay.year, calendarDay.month, calendarDay.number)
+		const date =
+			calendarType == 'Gregorian'
+				? new Date(calendarDay.year, calendarDay.month, calendarDay.number)
+				: newDate(calendarDay.year, calendarDay.month, calendarDay.number)
+
 		const minDate = new Date(min.getFullYear(), min.getMonth(), min.getDate())
 		const maxDate = new Date(max.getFullYear(), max.getMonth(), max.getDate())
 		return date >= minDate && date <= maxDate
 	}
+
+	function isToday(calendarDay: CalendarDay) {
+		if (calendarType == 'Gregorian') {
+			return (
+				calendarDay.year === todayDate.getFullYear() &&
+				calendarDay.month === todayDate.getMonth() &&
+				calendarDay.number === todayDate.getDate()
+			)
+		} else {
+			return (
+				calendarDay.year === getYear(todayDate) &&
+				calendarDay.month === getMonth(todayDate) &&
+				calendarDay.number === getDate(todayDate)
+			)
+		}
+	}
+	function isDaySelected(calendarDay: CalendarDay) {
+		if (calendarType == 'Gregorian') {
+			return (
+				value &&
+				calendarDay.year === value.getFullYear() &&
+				calendarDay.month === value.getMonth() &&
+				calendarDay.number === value.getDate()
+			)
+		} else {
+			return (
+				value &&
+				calendarDay.year === getYear(value) &&
+				calendarDay.month === getMonth(value) &&
+				calendarDay.number === getDate(value)
+			)
+		}
+	}
 	function shiftKeydown(e: KeyboardEvent) {
 		if (e.shiftKey && e.key === 'ArrowUp') {
-			setYear(browseDate.getFullYear() - 1)
+			calendarType == 'Gregorian'
+				? setYear(browseDate.getFullYear() - 1)
+				: setYear(getYear(browseDate) - 1)
 		} else if (e.shiftKey && e.key === 'ArrowDown') {
-			setYear(browseDate.getFullYear() + 1)
+			calendarType == 'Gregorian'
+				? setYear(browseDate.getFullYear() + 1)
+				: setYear(getYear(browseDate) + 1)
 		} else if (e.shiftKey && e.key === 'ArrowLeft') {
-			setMonth(browseDate.getMonth() - 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() - 1)
+				: setMonth(getMonth(browseDate) - 1)
 		} else if (e.shiftKey && e.key === 'ArrowRight') {
-			setMonth(browseDate.getMonth() + 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() + 1)
+				: setMonth(getMonth(browseDate) + 1)
 		} else {
 			return false
 		}
@@ -186,13 +331,21 @@
 			shiftKeydown(e)
 			return
 		} else if (e.key === 'ArrowUp') {
-			setYear(browseDate.getFullYear() - 1)
+			calendarType == 'Gregorian'
+				? setYear(browseDate.getFullYear() - 1)
+				: setYear(getYear(browseDate) - 1)
 		} else if (e.key === 'ArrowDown') {
-			setYear(browseDate.getFullYear() + 1)
+			calendarType == 'Gregorian'
+				? setYear(browseDate.getFullYear() + 1)
+				: setYear(getYear(browseDate) + 1)
 		} else if (e.key === 'ArrowLeft') {
-			setMonth(browseDate.getMonth() - 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() - 1)
+				: setMonth(getMonth(browseDate) - 1)
 		} else if (e.key === 'ArrowRight') {
-			setMonth(browseDate.getMonth() + 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() + 1)
+				: setMonth(getMonth(browseDate) + 1)
 		} else {
 			shiftKeydown(e)
 			return
@@ -205,9 +358,13 @@
 			shiftKeydown(e)
 			return
 		} else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
-			setMonth(browseDate.getMonth() - 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() - 1)
+				: setMonth(getMonth(browseDate) - 1)
 		} else if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
-			setMonth(browseDate.getMonth() + 1)
+			calendarType == 'Gregorian'
+				? setMonth(browseDate.getMonth() + 1)
+				: setMonth(getMonth(browseDate) + 1)
 		} else {
 			shiftKeydown(e)
 			return
@@ -227,16 +384,24 @@
 			shiftKeydown(e)
 			return
 		} else if (e.key === 'ArrowUp') {
-			browseDate.setDate(browseDate.getDate() - 7)
+			calendarType == 'Gregorian'
+				? browseDate.setDate(browseDate.getDate() - 7)
+				: browseDate.setDate(getDate(browseDate) - 7)
 			setValueDate(browseDate)
 		} else if (e.key === 'ArrowDown') {
-			browseDate.setDate(browseDate.getDate() + 7)
+			calendarType == 'Gregorian'
+				? browseDate.setDate(browseDate.getDate() + 7)
+				: browseDate.setDate(getDate(browseDate) + 7)
 			setValueDate(browseDate)
 		} else if (e.key === 'ArrowLeft') {
-			browseDate.setDate(browseDate.getDate() - 1)
+			calendarType == 'Gregorian'
+				? browseDate.setDate(browseDate.getDate() - 1)
+				: browseDate.setDate(getDate(browseDate) - 1)
 			setValueDate(browseDate)
 		} else if (e.key === 'ArrowRight') {
-			browseDate.setDate(browseDate.getDate() + 1)
+			calendarType == 'Gregorian'
+				? browseDate.setDate(browseDate.getDate() + 1)
+				: browseDate.setDate(getDate(browseDate) + 1)
 			setValueDate(browseDate)
 		} else if (e.key === 'Enter') {
 			setValue(browseDate)
@@ -257,7 +422,10 @@
 				type="button"
 				class="page-button"
 				tabindex="-1"
-				on:click={() => setMonth(browseDate.getMonth() - 1)}
+				on:click={() =>
+					calendarType == 'Gregorian'
+						? setMonth(browseDate.getMonth() - 1)
+						: setMonth(getMonth(browseDate) - 1)}
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
 					><path
@@ -273,11 +441,7 @@
 					on:input={(e) => setMonth(parseInt(e.currentTarget.value))}
 				>
 					{#each iLocale.months as monthName, i}
-						<option
-							disabled={new Date(browseYear, i, getMonthLength(browseYear, i), 23, 59, 59, 999) <
-								min || new Date(browseYear, i) > max}
-							value={i}>{monthName}</option
-						>
+						<option disabled={monthIsInRange(i)} value={i}>{monthName} </option>
 					{/each}
 				</select>
 				<!--
@@ -309,7 +473,12 @@
 				<!-- style <select> button without affecting menu popup -->
 				<select class="dummy-select" tabindex="-1">
 					{#each years as v}
-						<option value={v} selected={v === browseDate.getFullYear()}>{v}</option>
+						<option
+							value={v}
+							selected={calendarType == 'Gregorian'
+								? v === browseDate.getFullYear()
+								: v === getYear(browseDate)}>{v}</option
+						>
 					{/each}
 				</select>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -320,14 +489,17 @@
 				type="button"
 				class="page-button"
 				tabindex="-1"
-				on:click={() => setMonth(browseDate.getMonth() + 1)}
+				on:click={() =>
+					calendarType == 'Gregorian'
+						? setMonth(browseDate.getMonth() + 1)
+						: setMonth(getMonth(browseDate) + 1)}
 			>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
 					><path d="M5 3l3.057-3 11.943 12-11.943 12-3.057-3 9-9z" /></svg
 				>
 			</button>
 		</div>
-		<div class="header">
+		<div class="header {calendarType == 'Jalali' ? 'reverse' : ''}">
 			<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 			{#each Array(7) as _, i}
 				{#if i + iLocale.weekStartsOn < 7}
@@ -339,20 +511,15 @@
 		</div>
 		<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
 		{#each Array(6) as _, weekIndex}
-			<div class="week">
+			<div class="week {calendarType == 'Jalali' ? 'reverse' : ''}">
 				{#each calendarDays.slice(weekIndex * 7, weekIndex * 7 + 7) as calendarDay}
 					<!-- svelte-ignore a11y-click-events-have-key-events -->
 					<div
 						class="cell"
 						on:click={() => selectDay(calendarDay)}
 						class:disabled={!dayIsInRange(calendarDay, min, max)}
-						class:selected={value &&
-							calendarDay.year === value.getFullYear() &&
-							calendarDay.month === value.getMonth() &&
-							calendarDay.number === value.getDate()}
-						class:today={calendarDay.year === todayDate.getFullYear() &&
-							calendarDay.month === todayDate.getMonth() &&
-							calendarDay.number === todayDate.getDate()}
+						class:selected={isDaySelected(calendarDay)}
+						class:today={isToday(calendarDay)}
 						class:other-month={calendarDay.month !== browseMonth}
 					>
 						<span>{calendarDay.number}</span>
@@ -472,6 +639,8 @@
 
 	.week
 		display: flex
+	.reverse
+		flex-direction: row-reverse
 	.cell
 		display: flex
 		align-items: center

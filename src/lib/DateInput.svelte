@@ -92,8 +92,6 @@
 	function textUpdate(text: string, formatTokens: FormatToken[]) {
 		if (text.length) {
 			const result = parse(text, formatTokens, $store, calendarType)
-
-			console.log(result, 'Result parse')
 			if (result.date !== null) {
 				valid = true
 				store.set(result.date)

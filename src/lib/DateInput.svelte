@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition'
 	import { cubicInOut } from 'svelte/easing'
-	import { toText } from './date-utils.js'
+	import { toText, getMonthLength, type CalendarType } from './date-utils.js'
 	import type { Locale } from './locale.js'
 	import { parse, createFormat, type FormatToken } from './parse.js'
 	import DateTimePicker from './DatePicker.svelte'
 	import { writable } from 'svelte/store'
 	import { createEventDispatcher } from 'svelte'
+	import { newDate, getYear } from 'date-fns-jalali'
 
 	const dispatch = createEventDispatcher<{
 		/** Fires when the user selects a new value in the DatePicker by clicking on a date or by pressing enter */
@@ -38,10 +39,27 @@
 	export let value: Date | null = null
 	$: store.set(value)
 
+	export let calendarType: CalendarType = 'Jalali'
 	/** The earliest value the user can select */
-	export let min = new Date(defaultDate.getFullYear() - 20, 0, 1)
+	export let min =
+		calendarType == 'Gregorian'
+			? new Date(defaultDate.getFullYear() - 20, 0, 1)
+			: newDate(getYear(defaultDate) - 20, 0, 1)
+
 	/** The latest value the user can select */
-	export let max = new Date(defaultDate.getFullYear(), 11, 31, 23, 59, 59, 999)
+	export let max =
+		calendarType == 'Gregorian'
+			? new Date(defaultDate.getFullYear(), 11, 31, 23, 59, 59, 999)
+			: newDate(
+					getYear(defaultDate) + 1,
+					11,
+					getMonthLength(getYear(defaultDate) + 1, 11, calendarType),
+					23,
+					59,
+					59,
+					999,
+				)
+
 	/** Set the input element's ID attribute */
 	export let id: string | null = null
 	/** Placeholder text to show when input field is empty */
@@ -61,8 +79,8 @@
 
 	/** Format string */
 	export let format = 'yyyy-MM-dd HH:mm:ss'
-	let formatTokens = createFormat(format, locale)
-	$: formatTokens = createFormat(format, locale)
+	let formatTokens = createFormat(format, calendarType, locale)
+	$: formatTokens = createFormat(format, calendarType, locale)
 
 	function valueUpdate(value: Date | null, formatTokens: FormatToken[]) {
 		text = toText(value, formatTokens)
@@ -73,7 +91,9 @@
 
 	function textUpdate(text: string, formatTokens: FormatToken[]) {
 		if (text.length) {
-			const result = parse(text, formatTokens, $store)
+			const result = parse(text, formatTokens, $store, calendarType)
+
+			console.log(result, 'Result parse')
 			if (result.date !== null) {
 				valid = true
 				store.set(result.date)
@@ -206,7 +226,7 @@
 				e.currentTarget.value === text + e.data
 			) {
 				// check for missing punctuation, and add if there is any
-				let result = parse(text, formatTokens, $store)
+				let result = parse(text, formatTokens, $store, calendarType)
 				if (result.missingPunctuation !== '' && !result.missingPunctuation.startsWith(e.data)) {
 					text = text + result.missingPunctuation + e.data
 					return
@@ -233,6 +253,7 @@
 				{locale}
 				{browseWithoutSelecting}
 				{timePrecision}
+				{calendarType}
 			>
 				<slot />
 			</DateTimePicker>

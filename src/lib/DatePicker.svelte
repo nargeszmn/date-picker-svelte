@@ -190,10 +190,9 @@
 		}
 
 		const maxDate = getMonthLength(newYear, newMonth, calendarType)
-		const newDay =
-			calendarType == 'Gregorian'
-				? Math.min(browseDate.getDate(), maxDate)
-				: Math.min(getDate(browseDate), maxDate)
+		const currentSelectedDay =
+			calendarType == 'Gregorian' ? browseDate.getDate() : getDate(browseDate)
+		const newDay = Math.min(currentSelectedDay, maxDate)
 
 		if (calendarType == 'Gregorian') {
 			browse(

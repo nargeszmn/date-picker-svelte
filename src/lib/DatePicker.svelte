@@ -143,17 +143,32 @@
 
 	$: browseYear = calendarType == 'Gregorian' ? browseDate.getFullYear() : getYear(browseDate)
 	function setYear(newYear: number) {
+		const month = calendarType == 'Gregorian' ? browseDate.getMonth() : getMonth(browseDate)
+		const monthMaxDate = getMonthLength(newYear, month, calendarType)
+		const currentSelectedDay =
+			calendarType == 'Gregorian' ? browseDate.getDate() : getDate(browseDate)
+		const newDay = Math.min(currentSelectedDay, monthMaxDate)
+
 		if (calendarType == 'Gregorian') {
-			browseDate.setFullYear(newYear)
-			browse(browseDate)
+			browse(
+				new Date(
+					newYear,
+					browseDate.getMonth(),
+					newDay,
+					browseDate.getHours(),
+					browseDate.getMinutes(),
+					browseDate.getSeconds(),
+					browseDate.getMilliseconds(),
+				),
+			)
 		} else {
 			//newYear is in Jalali format
-			//Must update the browseDate with the corresponding Gregorian Date using the JalaliDate
+			//Must update the browseDate with the corresponding Gregorian Date
 			browse(
 				newDate(
 					newYear,
 					getMonth(browseDate),
-					getDate(browseDate),
+					newDay,
 					browseDate.getHours(),
 					browseDate.getMinutes(),
 					browseDate.getSeconds(),

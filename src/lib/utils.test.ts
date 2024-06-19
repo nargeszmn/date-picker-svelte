@@ -1,6 +1,6 @@
 import { describe, it, expect, test } from 'vitest'
 import { nb } from 'date-fns/locale'
-import { getCalendarDays, getMonthDays, toText } from './date-utils.js'
+import { getCalendarDays, getMonthDays, toText, toPersianCharacter, toLatinCharacter } from './date-utils.js'
 import { createFormat, parse } from './parse.js'
 import { getInnerLocale, localeFromDateFnsLocale } from './locale.js'
 import { newDate } from "date-fns-jalali";
@@ -192,6 +192,22 @@ describe('toText', () => {
 	})
 })
 
+describe('toPersianCharacter', () => {
+	it('converts latin expression to persian expression', () => {
+		const latinExpression = "1403-03-30 23:00:00"
+		const persianExpression = toPersianCharacter(latinExpression)
+		expect(persianExpression).toEqual("۱۴۰۳-۰۳-۳۰ ۲۳:۰۰:۰۰")
+	})
+})
+
+describe('toLatinCharacter', () => {
+	it('converts persian expression to latin expression', () => {
+		const persianExpression = "۱۴۰۳-۰۳-۳۰ ۲۳:۰۰:۰۰"
+		const latinExpression = toLatinCharacter(persianExpression)
+		expect(latinExpression).toEqual("1403-03-30 23:00:00")
+	})
+})
+
 describe('parse()', () => {
 	const baseDate = newDate(1403, 0, 1, 0, 0, 0, 999)
 
@@ -200,7 +216,6 @@ describe('parse()', () => {
 			const calendarType = 'Jalali'
 			const format = createFormat('yyyy--MM-dd HH:mm:ss', calendarType)
 			const result = parse('1403--12-30 23:59:59', format, baseDate, calendarType)
-			console.log(result)
 			expect(result).toEqual({
 			date: newDate(1403, 11, 30, 23, 59, 59, 999),
 			missingPunctuation: '',
@@ -211,7 +226,6 @@ describe('parse()', () => {
 			const calendarType = 'Gregorian'
 			const format = createFormat('yyyy--MM-dd HH:mm:ss', calendarType)
 			const result = parse('1234--12-31 23:59:59', format, baseDate, calendarType)
-			console.log(result)
 			expect(result).toEqual({
 			date: new Date(1234, 11, 31, 23, 59, 59, 999),
 			missingPunctuation: '',

@@ -15,6 +15,45 @@ export function toText(date: Date | null, formatTokens: FormatToken[]): string {
 	return text
 }
 
+export function toPersianCharacter(expression: string): string {
+	const persianZero = '۰'
+	const persianZeroUTF8 = persianZero.charCodeAt(0)
+
+	const latinZero = '0'
+	const latinZeroUTF8 = latinZero.charCodeAt(0)
+
+	const charDiff = persianZeroUTF8 - latinZeroUTF8
+
+	const expressionChars = [...expression]
+		.map(digit => {
+			if(digit.charCodeAt(0) >= latinZeroUTF8 && digit.charCodeAt(0) <= latinZeroUTF8 + 9) {
+				return String.fromCharCode(digit.charCodeAt(0) + charDiff)
+			}
+			return digit
+		}).join('')
+	return expressionChars;
+}
+
+export function toLatinCharacter(expression: string): string {
+	const persianZero = '۰'
+	const persianZeroUTF8 = persianZero.charCodeAt(0)
+
+	const latinZero = '0'
+	const latinZeroUTF8 = latinZero.charCodeAt(0)
+
+	const charDiff = persianZeroUTF8 - latinZeroUTF8
+
+	const expressionChars = [...expression]
+		.map(digit => {
+			if(digit.charCodeAt(0) >= persianZeroUTF8 && digit.charCodeAt(0) <= persianZeroUTF8 + 9) {
+				return String.fromCharCode(digit.charCodeAt(0) - charDiff)
+			}
+			return digit
+		}).join('')
+	return expressionChars;
+
+}
+
 export function isLeapYear(year: number): boolean {
 	return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
 }

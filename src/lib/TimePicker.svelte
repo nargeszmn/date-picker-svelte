@@ -1,7 +1,10 @@
 <script lang="ts">
+	import { toPersianCharacter, type CalendarType } from './date-utils.js'
+
 	export let browseDate: Date
 	export let timePrecision: 'minute' | 'second' | 'millisecond' | null
 	export let setTime: (d: Date) => Date
+	export let calendarType: CalendarType = 'Jalali'
 
 	let fields: (HTMLSpanElement | undefined | null)[] = []
 
@@ -70,12 +73,25 @@
 		}
 	}
 
-	$: setText(browseDate)
-	function setText(d: Date) {
-		const hours = ('00' + d.getHours()).slice(-2)
-		const minutes = ('00' + d.getMinutes()).slice(-2)
-		const seconds = ('00' + d.getSeconds()).slice(-2)
-		const milliseconds = ('000' + d.getMilliseconds()).slice(-3)
+	$: setText(browseDate, calendarType)
+	function setText(d: Date, calendarType: CalendarType) {
+		const hours =
+			calendarType == 'Jalali'
+				? toPersianCharacter(('00' + d.getHours()).slice(-2))
+				: ('00' + d.getHours()).slice(-2)
+		const minutes =
+			calendarType == 'Jalali'
+				? toPersianCharacter(('00' + d.getMinutes()).slice(-2))
+				: ('00' + d.getMinutes()).slice(-2)
+		const seconds =
+			calendarType == 'Jalali'
+				? toPersianCharacter(('00' + d.getSeconds()).slice(-2))
+				: ('00' + d.getSeconds()).slice(-2)
+		const milliseconds =
+			calendarType == 'Jalali'
+				? toPersianCharacter(('000' + d.getMilliseconds()).slice(-3))
+				: ('000' + d.getMilliseconds()).slice(-3)
+
 		if (fields[0] && fields[0].innerText !== hours) {
 			fields[0].innerText = hours
 		}
@@ -104,7 +120,7 @@
 		}
 
 		browseDate = setTime(browseDate)
-		setText(browseDate)
+		setText(browseDate, calendarType)
 	}
 
 	function parse(text: string, length: number) {
@@ -156,8 +172,11 @@
 			inputmode="numeric"
 			on:keydown={keydown}
 			on:input={input}
-			on:focus={focus}>{('00' + browseDate.getHours()).slice(-2)}</span
-		>:
+			on:focus={focus}
+			>{calendarType == 'Jalali'
+				? toPersianCharacter(('00' + browseDate.getHours()).slice(-2))
+				: ('00' + browseDate.getHours()).slice(-2)}
+		</span>:
 		<span
 			bind:this={fields[1]}
 			role="spinbutton"
@@ -167,8 +186,11 @@
 			inputmode="numeric"
 			on:keydown={keydown}
 			on:input={input}
-			on:focus={focus}>{('00' + browseDate.getMinutes()).slice(-2)}</span
-		>
+			on:focus={focus}
+			>{calendarType == 'Jalali'
+				? toPersianCharacter(('00' + browseDate.getMinutes()).slice(-2))
+				: ('00' + browseDate.getMinutes()).slice(-2)}
+		</span>
 		{#if timePrecision !== 'minute'}
 			:<span
 				bind:this={fields[2]}
@@ -179,8 +201,11 @@
 				inputmode="numeric"
 				on:keydown={keydown}
 				on:input={input}
-				on:focus={focus}>{('00' + browseDate.getSeconds()).slice(-2)}</span
-			>
+				on:focus={focus}
+				>{calendarType == 'Jalali'
+					? toPersianCharacter(('00' + browseDate.getSeconds()).slice(-2))
+					: ('00' + browseDate.getSeconds()).slice(-2)}
+			</span>
 			{#if timePrecision !== 'second'}
 				.<span
 					bind:this={fields[3]}
@@ -191,8 +216,11 @@
 					inputmode="numeric"
 					on:keydown={keydown}
 					on:input={input}
-					on:focus={focus}>{('000' + browseDate.getMilliseconds()).slice(-3)}</span
-				>
+					on:focus={focus}
+					>{calendarType == 'Jalali'
+						? toPersianCharacter(('000' + browseDate.getMilliseconds()).slice(-3))
+						: ('000' + browseDate.getMilliseconds()).slice(-3)}
+				</span>
 			{/if}
 		{/if}
 	</div>

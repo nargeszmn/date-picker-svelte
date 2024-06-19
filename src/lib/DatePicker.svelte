@@ -3,6 +3,7 @@
 	import {
 		getMonthLength,
 		getCalendarDays,
+		toPersianCharacter,
 		type CalendarDay,
 		type CalendarType,
 	} from './date-utils.js'
@@ -481,7 +482,9 @@
 					on:keydown={yearKeydown}
 				>
 					{#each years as v}
-						<option value={v}>{v}</option>
+						<option value={v}
+							>{calendarType == 'Jalali' ? toPersianCharacter(v.toString()) : v}</option
+						>
 					{/each}
 				</select>
 				<!-- style <select> button without affecting menu popup -->
@@ -491,8 +494,10 @@
 							value={v}
 							selected={calendarType == 'Gregorian'
 								? v === browseDate.getFullYear()
-								: v === getYear(browseDate)}>{v}</option
+								: v === getYear(browseDate)}
 						>
+							{calendarType == 'Jalali' ? toPersianCharacter(v.toString()) : v}
+						</option>
 					{/each}
 				</select>
 				<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
@@ -536,13 +541,17 @@
 						class:today={isToday(calendarDay)}
 						class:other-month={calendarDay.month !== browseMonth}
 					>
-						<span>{calendarDay.number}</span>
+						<span
+							>{calendarType == 'Jalali'
+								? toPersianCharacter(calendarDay.number.toString())
+								: calendarDay.number}</span
+						>
 					</div>
 				{/each}
 			</div>
 		{/each}
 
-		<TimePicker {timePrecision} bind:browseDate {setTime} />
+		<TimePicker {timePrecision} bind:browseDate {setTime} bind:calendarType />
 
 		<slot />
 	</div>

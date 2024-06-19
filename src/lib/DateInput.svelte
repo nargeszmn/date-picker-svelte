@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition'
 	import { cubicInOut } from 'svelte/easing'
-	import { toText, getMonthLength, type CalendarType } from './date-utils.js'
+	import {
+		toText,
+		getMonthLength,
+		toPersianCharacter,
+		toLatinCharacter,
+		type CalendarType,
+	} from './date-utils.js'
 	import type { Locale } from './locale.js'
 	import { parse, createFormat, type FormatToken } from './parse.js'
 	import DateTimePicker from './DatePicker.svelte'
@@ -63,7 +69,8 @@
 	/** Set the input element's ID attribute */
 	export let id: string | null = null
 	/** Placeholder text to show when input field is empty */
-	export let placeholder = '2020-12-31 23:00:00'
+	export let placeholder =
+		calendarType == 'Jalali' ? toPersianCharacter('1403-01-30 23:00:00') : '1403-01-30 23:00:00'
 	/** Whether the text is valid */
 	export let valid = true
 	/** Disable the input **/
@@ -83,15 +90,21 @@
 	$: formatTokens = createFormat(format, calendarType, locale)
 
 	function valueUpdate(value: Date | null, formatTokens: FormatToken[]) {
-		text = toText(value, formatTokens)
+		text =
+			calendarType == 'Jalali'
+				? toPersianCharacter(toText(value, formatTokens))
+				: toLatinCharacter(toText(value, formatTokens))
 	}
 	$: valueUpdate($store, formatTokens)
 
-	export let text = toText($store, formatTokens)
+	export let text =
+		calendarType == 'Jalali'
+			? toPersianCharacter(toText($store, formatTokens))
+			: toLatinCharacter(toText($store, formatTokens))
 
 	function textUpdate(text: string, formatTokens: FormatToken[]) {
 		if (text.length) {
-			const result = parse(text, formatTokens, $store, calendarType)
+			const result = parse(toLatinCharacter(text), formatTokens, $store, calendarType)
 			if (result.date !== null) {
 				valid = true
 				store.set(result.date)
@@ -224,13 +237,16 @@
 				e.currentTarget.value === text + e.data
 			) {
 				// check for missing punctuation, and add if there is any
-				let result = parse(text, formatTokens, $store, calendarType)
+				let result = parse(toLatinCharacter(text), formatTokens, $store, calendarType)
 				if (result.missingPunctuation !== '' && !result.missingPunctuation.startsWith(e.data)) {
 					text = text + result.missingPunctuation + e.data
 					return
 				}
 			}
-			text = e.currentTarget.value
+			text =
+				calendarType == 'Jalali'
+					? toPersianCharacter(e.currentTarget.value)
+					: toLatinCharacter(e.currentTarget.value)
 		}}
 	/>
 	{#if visible && !disabled}

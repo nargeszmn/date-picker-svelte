@@ -18,15 +18,15 @@ export function getLocaleDefaults(calendarType: CalendarType): InnerLocale {
 	let localeDefaults: InnerLocale = {
 		weekdays: [],
 		months: [],
-		shortMonths:[],
+		shortMonths: [],
 		weekStartsOn: 0,
 		calendarType: 'Gregorian'
 	}
 
-	if(calendarType == 'Jalali') {
+	if (calendarType == 'Jalali') {
 		const jalaliLocale = {
-			weekdays : ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'],
-			months : [
+			weekdays: ['ی', 'د', 'س', 'چ', 'پ', 'ج', 'ش'],
+			months: [
 				'فروردین',
 				'اردیبهشت',
 				'خرداد',
@@ -40,7 +40,7 @@ export function getLocaleDefaults(calendarType: CalendarType): InnerLocale {
 				'بهمن',
 				'اسفند',
 			],
-			shortMonths : [
+			shortMonths: [
 				'فرو',
 				'ارد',
 				'خرد',
@@ -54,53 +54,53 @@ export function getLocaleDefaults(calendarType: CalendarType): InnerLocale {
 				'بهم',
 				'اسف',
 			],
-			weekStartsOn : 6,
+			weekStartsOn: 6,
 			calendarType: 'Jalali'
 		}
 		localeDefaults = jalaliLocale
 	} else {
 		const gregorianLocale = {
-			weekdays:['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
+			weekdays: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
 			months: [
-					'January',
-					'February',
-					'March',
-					'April',
-					'May',
-					'June',
-					'July',
-					'August',
-					'September',
-					'October',
-					'November',
-					'December',
-				],
+				'January',
+				'February',
+				'March',
+				'April',
+				'May',
+				'June',
+				'July',
+				'August',
+				'September',
+				'October',
+				'November',
+				'December',
+			],
 			shortMonths: [
-					'Jan',
-					'Feb',
-					'Mar',
-					'Apr',
-					'May',
-					'Jun',
-					'Jul',
-					'Aug',
-					'Sep',
-					'Oct',
-					'Nov',
-					'Dec',
-				],
+				'Jan',
+				'Feb',
+				'Mar',
+				'Apr',
+				'May',
+				'Jun',
+				'Jul',
+				'Aug',
+				'Sep',
+				'Oct',
+				'Nov',
+				'Dec',
+			],
 			weekStartsOn: 1,
 			calendarType: 'Gregorian'
 		}
 		localeDefaults = gregorianLocale
-    }
+	}
 
 	return localeDefaults
-	
+
 }
 export function getInnerLocale(locale: Locale, calendarType: CalendarType): InnerLocale {
 	const innerLocale = getLocaleDefaults(calendarType)
-	if(calendarType == 'Gregorian' && locale?.calendarType == calendarType) {
+	if (calendarType == 'Gregorian' && locale?.calendarType == calendarType) {
 		if (typeof locale.weekStartsOn === 'number') {
 			innerLocale.weekStartsOn = locale.weekStartsOn
 		}
@@ -126,7 +126,7 @@ type DateFnsLocale = {
 /** Create a Locale from a date-fns locale, which only works for Gregorian calendar */
 export function localeFromDateFnsLocale(dateFnsLocale: DateFnsLocale, calendarType: CalendarType): InnerLocale {
 	const locale = getLocaleDefaults(calendarType)
-	if(calendarType == 'Gregorian') {
+	if (calendarType == 'Gregorian') {
 		if (typeof dateFnsLocale.options?.weekStartsOn === 'number') {
 			locale.weekStartsOn = dateFnsLocale.options.weekStartsOn
 		}

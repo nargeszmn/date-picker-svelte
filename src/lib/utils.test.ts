@@ -36,30 +36,30 @@ describe('getCalendarDays', () => {
 	describe('works for all months in', () => {
 		test('1403-1405 for Jalali Calendar', () => {
 			const weekdayStartsOn = 6 // Saturday
-				for (let year = 1403; year < 1405; year++) {
-					for (let month = 0; month <= 11; month++) {
-						testMonth(year, month)
-					}
+			for (let year = 1403; year < 1405; year++) {
+				for (let month = 0; month <= 11; month++) {
+					testMonth(year, month)
 				}
-				function testMonth(year: number, month: number) {
-					const date = newDate(year, month, 1)
-					const calDays = getCalendarDays(date, weekdayStartsOn, 'Jalali')
-					expect(calDays.length).toEqual(42)
-					for (let i = 0; i < calDays.length; i++) {
-						const calDay = calDays[i]
-						expect({
-							year: calDay.year,
-							month: calDay.month,
-							number: calDay.number,
-							weekday: newDate(calDay.year, calDay.month, calDay.number).getDay(),
-						}).toEqual({
-							year: calDay.year,
-							month: calDay.month,
-							number: calDay.number,
-							weekday: ((i % 7) + weekdayStartsOn) % 7,
-						})
-					}
+			}
+			function testMonth(year: number, month: number) {
+				const date = newDate(year, month, 1)
+				const calDays = getCalendarDays(date, weekdayStartsOn, 'Jalali')
+				expect(calDays.length).toEqual(42)
+				for (let i = 0; i < calDays.length; i++) {
+					const calDay = calDays[i]
+					expect({
+						year: calDay.year,
+						month: calDay.month,
+						number: calDay.number,
+						weekday: newDate(calDay.year, calDay.month, calDay.number).getDay(),
+					}).toEqual({
+						year: calDay.year,
+						month: calDay.month,
+						number: calDay.number,
+						weekday: ((i % 7) + weekdayStartsOn) % 7,
+					})
 				}
+			}
 		})
 
 		test('1995-2025 for Gregorian Calendar', () => {
@@ -89,7 +89,7 @@ describe('getCalendarDays', () => {
 				}
 			}
 		})
-		
+
 	})
 
 	describe('gets the correct days from the prev/next month', () => {
@@ -102,7 +102,7 @@ describe('getCalendarDays', () => {
 				{ year: 1402, month: 11, number: 27 },
 				{ year: 1402, month: 11, number: 28 },
 				{ year: 1402, month: 11, number: 29 },
-				...getMonthDays(1403, 0,'Jalali'),
+				...getMonthDays(1403, 0, 'Jalali'),
 				{ year: 1403, month: 1, number: 1 },
 				{ year: 1403, month: 1, number: 2 },
 				{ year: 1403, month: 1, number: 3 },
@@ -110,7 +110,7 @@ describe('getCalendarDays', () => {
 				{ year: 1403, month: 1, number: 5 },
 				{ year: 1403, month: 1, number: 6 },
 				{ year: 1403, month: 1, number: 7 },
-				
+
 			])
 		})
 
@@ -217,8 +217,8 @@ describe('parse()', () => {
 			const format = createFormat('yyyy--MM-dd HH:mm:ss', calendarType)
 			const result = parse('1403--12-30 23:59:59', format, baseDate, calendarType)
 			expect(result).toEqual({
-			date: newDate(1403, 11, 30, 23, 59, 59, 999),
-			missingPunctuation: '',
+				date: newDate(1403, 11, 30, 23, 59, 59, 999),
+				missingPunctuation: '',
 			})
 		})
 
@@ -227,8 +227,8 @@ describe('parse()', () => {
 			const format = createFormat('yyyy--MM-dd HH:mm:ss', calendarType)
 			const result = parse('1234--12-31 23:59:59', format, baseDate, calendarType)
 			expect(result).toEqual({
-			date: new Date(1234, 11, 31, 23, 59, 59, 999),
-			missingPunctuation: '',
+				date: new Date(1234, 11, 31, 23, 59, 59, 999),
+				missingPunctuation: '',
 			})
 		})
 	})
@@ -243,7 +243,7 @@ describe('parse()', () => {
 				missingPunctuation: '',
 			})
 		})
-		
+
 		test('for Gregorian Calendar', () => {
 			const calendarType = 'Gregorian'
 			const format = createFormat('dd MMM yyyy HH:mm:ss', calendarType)
@@ -271,7 +271,7 @@ describe('parse()', () => {
 		test('for Jalali Calendar', () => {
 			const calendarType = 'Jalali'
 			const format = createFormat('dd MMM yyyy HH:mm:ss', calendarType)
-			const result = parse('۳۱ قرد ۱۴۰۳ ۲۳:۵۹:۵۹',format, baseDate, calendarType)
+			const result = parse('۳۱ قرد ۱۴۰۳ ۲۳:۵۹:۵۹', format, baseDate, calendarType)
 			expect(result).toEqual({
 				date: null,
 				missingPunctuation: '',
@@ -312,7 +312,7 @@ describe('parse()', () => {
 	it('fails with too high date-of-month', () => {
 		const calendarType = 'Gregorian'
 		const format = createFormat('yyyy--MM-dd HH:mm:ss', calendarType)
-		const dayOfMonthOverflow = parse('1234--04-31 23:59:59', format, baseDate, calendarType	)
+		const dayOfMonthOverflow = parse('1234--04-31 23:59:59', format, baseDate, calendarType)
 		expect(dayOfMonthOverflow).toEqual({
 			date: null,
 			missingPunctuation: '',

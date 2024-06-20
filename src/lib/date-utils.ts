@@ -1,5 +1,5 @@
 import type { FormatToken } from './parse.js'
-import { newDate,getYear,getMonth,isLeapYear as isJalaliLeapYear} from "date-fns-jalali";
+import { newDate, getYear, getMonth, isLeapYear as isJalaliLeapYear } from "date-fns-jalali";
 
 export function toText(date: Date | null, formatTokens: FormatToken[]): string {
 	let text = ''
@@ -26,7 +26,7 @@ export function toPersianCharacter(expression: string): string {
 
 	const expressionChars = [...expression]
 		.map(digit => {
-			if(digit.charCodeAt(0) >= latinZeroUTF8 && digit.charCodeAt(0) <= latinZeroUTF8 + 9) {
+			if (digit.charCodeAt(0) >= latinZeroUTF8 && digit.charCodeAt(0) <= latinZeroUTF8 + 9) {
 				return String.fromCharCode(digit.charCodeAt(0) + charDiff)
 			}
 			return digit
@@ -45,7 +45,7 @@ export function toLatinCharacter(expression: string): string {
 
 	const expressionChars = [...expression]
 		.map(digit => {
-			if(digit.charCodeAt(0) >= persianZeroUTF8 && digit.charCodeAt(0) <= persianZeroUTF8 + 9) {
+			if (digit.charCodeAt(0) >= persianZeroUTF8 && digit.charCodeAt(0) <= persianZeroUTF8 + 9) {
 				return String.fromCharCode(digit.charCodeAt(0) - charDiff)
 			}
 			return digit
@@ -59,18 +59,18 @@ export function isLeapYear(year: number): boolean {
 }
 
 export type CalendarType = 'Gregorian' | 'Jalali'
-export function getMonthLength(year: number, month: number, calendarType:CalendarType): number {
-	let leapMonthLength: number, monthLengths:number[] = []
+export function getMonthLength(year: number, month: number, calendarType: CalendarType): number {
+	let leapMonthLength: number, monthLengths: number[] = []
 
 	if (calendarType == 'Gregorian') {
 		leapMonthLength = isLeapYear(year) ? 29 : 28
 		monthLengths = [31, leapMonthLength, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-	} else if (calendarType =='Jalali') {
-		const gregorianFirstDayOfMonth = newDate(year,month,1)
+	} else if (calendarType == 'Jalali') {
+		const gregorianFirstDayOfMonth = newDate(year, month, 1)
 		leapMonthLength = isJalaliLeapYear(gregorianFirstDayOfMonth) ? 30 : 29
 		monthLengths = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, leapMonthLength]
 	}
-	
+
 	return monthLengths[month]
 }
 
@@ -79,7 +79,7 @@ export type CalendarDay = {
 	month: number
 	number: number
 }
-export function getMonthDays(year: number, month: number, calendarType:CalendarType): CalendarDay[] {
+export function getMonthDays(year: number, month: number, calendarType: CalendarType): CalendarDay[] {
 	const monthLength = getMonthLength(year, month, calendarType)
 	const days: CalendarDay[] = []
 	for (let i = 0; i < monthLength; i++) {
@@ -92,15 +92,15 @@ export function getMonthDays(year: number, month: number, calendarType:CalendarT
 	return days
 }
 
-export function getCalendarDays(value: Date, weekStartsOn: number, calendarType:CalendarType): CalendarDay[] {
+export function getCalendarDays(value: Date, weekStartsOn: number, calendarType: CalendarType): CalendarDay[] {
 	let year = 0, month = 0, firstWeekday = 0
 
-	if(calendarType=='Gregorian') {
+	if (calendarType == 'Gregorian') {
 		year = value.getFullYear()
 		month = value.getMonth()
 		firstWeekday = new Date(year, month, 1).getDay()
 
-	} else if(calendarType =='Jalali') {
+	} else if (calendarType == 'Jalali') {
 		year = getYear(value);
 		month = getMonth(value);
 		firstWeekday = newDate(year, month, 1).getDay()

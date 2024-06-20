@@ -1,16 +1,16 @@
 import { getMonthLength } from '$lib/date-utils.js'
 import { type Locale, type InnerLocale, getInnerLocale } from '$lib/locale'
 import {
-		newDate,
-		getYear,
-		getMonth,
-		getDate,
-		getHours,
-		getMinutes,
-		getSeconds,
-		getMilliseconds
+	newDate,
+	getYear,
+	getMonth,
+	getDate,
+	getHours,
+	getMinutes,
+	getSeconds,
+	getMilliseconds
 
-	} from 'date-fns-jalali'
+} from 'date-fns-jalali'
 
 type RuleToken = {
 	id: string
@@ -27,7 +27,7 @@ type ParseResult = {
 
 export type CalendarType = 'Gregorian' | 'Jalali'
 /** Parse a string according to the supplied format tokens. Returns a date if successful, and the missing punctuation if there is any that should be after the string */
-export function parse(str: string, tokens: FormatToken[], baseDate: Date | null, calendarType:CalendarType): ParseResult {
+export function parse(str: string, tokens: FormatToken[], baseDate: Date | null, calendarType: CalendarType): ParseResult {
 	let missingPunctuation = ''
 	let valid = true
 	let year = 0, month = 0, day = 0, hours = 0, minutes = 0, seconds = 0, ms = 0, monthLength = 0
@@ -106,7 +106,7 @@ export function parse(str: string, tokens: FormatToken[], baseDate: Date | null,
 					year = 2000 + value
 				} else if (calendarType == 'Jalali') {
 					value.toString().startsWith('0') ? year = 1400 + value : year = 1300 + value
- 				}
+				}
 			}
 		} else if (token.id === 'yyyy') {
 			const value = parseUint(/^[0-9]{4}/, 0, 9999)
@@ -254,7 +254,7 @@ function jalParseRule(s: string, innerLocale: InnerLocale) {
 	}
 }
 
-export function createFormat(s: string, calendarType:CalendarType, locale: Locale = {}): FormatToken[] {
+export function createFormat(s: string, calendarType: CalendarType, locale: Locale = {}): FormatToken[] {
 	const innerLocale = getInnerLocale(locale, calendarType)
 	const tokens = []
 
@@ -266,7 +266,7 @@ export function createFormat(s: string, calendarType:CalendarType, locale: Local
 		} else if (calendarType == "Jalali") {
 			token = jalParseRule(s, innerLocale)
 		}
-		
+
 		if (token) {
 			// parsed a token like "yyyy"
 			tokens.push(token)
